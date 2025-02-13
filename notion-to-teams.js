@@ -2,7 +2,7 @@ const axios = require("axios");
 
 async function checkNotionUpdates() {
   try {
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    const tenMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
 
     const notionResponse = await axios.post(
       `https://api.notion.com/v1/databases/${process.env.DATABASE_ID}/query`,
@@ -47,13 +47,13 @@ async function checkNotionUpdates() {
       });
 
       message = {
-        text: `## 🚀 Recent Notion Updates (Last 10 Minutes)\n${taskMessages.join(
+        text: `## 🚀 Recent Notion Updates (Last 5 Minutes)\n${taskMessages.join(
           "\n"
         )}`,
       };
     } else {
       message = {
-        text: "## 🔍 Notion Update Check\nNo updates found in the last 10 minutes",
+        text: "## 🔍 Notion Update Check\nNo updates found in the last 5 minutes",
       };
     }
 
