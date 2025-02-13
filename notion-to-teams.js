@@ -2,9 +2,24 @@ const axios = require("axios");
 
 async function checkNotionUpdates() {
   try {
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+
     const notionResponse = await axios.post(
       `https://api.notion.com/v1/databases/${process.env.DATABASE_ID}/query`,
-      {},
+      {
+        sorts: [
+          {
+            property: "last_edited_time",
+            direction: "descending",
+          },
+        ],
+        filter: {
+          timestamp: "last_edited_time",
+          last_edited_time: {
+            after: tenMinutesAgo,
+          },
+        },
+      },
       {
         headers: {
           Authorization: `Bearer ${process.env.NOTION_API_KEY}`,
@@ -15,8 +30,9 @@ async function checkNotionUpdates() {
     );
 
     const tasks = notionResponse.data.results;
+    let message;
+
     if (tasks && tasks.length > 0) {
-      // Create a formatted message for each task
       const taskMessages = tasks.map((task) => {
         const taskName =
           task.properties["Task name"]?.title?.[0]?.text?.content ||
@@ -25,24 +41,23 @@ async function checkNotionUpdates() {
         const assignee =
           task.properties.Assignee?.people?.[0]?.name || "Unassigned";
         const taskUrl = task.url;
+        const lastEdited = new Date(task.last_edited_time).toLocaleTimeString();
 
-        return `
-            ### ${taskName}
-            👤 **Assignee:** ${assignee}
-            📌 **Status:** ${taskStatus}
-            🔗 [View in Notion](${taskUrl})
-            ---`;
+        return `### ${taskName}\n👤 ${assignee} | 📌 ${taskStatus} | ⏰ ${lastEdited}\n🔗 [View in Notion](${taskUrl})\n---`;
       });
 
-      // Combine all task messages into one card
-      const message = {
-        text: `# 🚀 Notion Tasks Update\n\n${taskMessages.join("\n")}`,
+      message = {
+        text: `## 🚀 Recent Notion Updates (Last 10 Minutes)\n${taskMessages.join(
+          "\n"
+        )}`,
       };
-
-      await sendToTeams(message);
     } else {
-      console.log("No tasks found in the response");
+      message = {
+        text: "## 🔍 Notion Update Check\nNo updates found in the last 10 minutes",
+      };
     }
+
+    await sendToTeams(message);
   } catch (error) {
     console.error("Error in checkNotionUpdates:", error.message);
     throw error;
