@@ -33,20 +33,26 @@ async function checkNotionUpdates() {
 
 async function sendToTeams(task) {
   try {
-    // Safely access nested properties
+    // Safely access nested properties with correct mapping
     const taskName =
-      task.properties?.Name?.title?.[0]?.text?.content || "Untitled Task";
-    const taskStatus = task.properties?.Status?.select?.name || "No Status";
+      task.properties?.["Task name"]?.title?.[0]?.text?.content ||
+      "Untitled Task";
+    const taskStatus = task.properties?.Status?.status?.name || "No Status";
     const taskUrl = task.url || "";
 
+    // Add assignee information if available
+    const assignee =
+      task.properties?.Assignee?.people?.[0]?.name || "Unassigned";
+
     const message = {
-      text: `🚀 **Task Updated:** ${taskName}\n📌 **Status:** ${taskStatus}\n🔗 [View Task in Notion](${taskUrl})`,
+      text: `🚀 **Task Updated:** ${taskName}\n👤 **Assignee:** ${assignee}\n📌 **Status:** ${taskStatus}\n🔗 [View Task in Notion](${taskUrl})`,
     };
 
     await axios.post(process.env.TEAMS_WEBHOOK_URL, message);
     console.log("Message sent to Teams successfully!");
   } catch (error) {
     console.error("Error in sendToTeams:", error.message);
+    console.error("Task properties:", JSON.stringify(task.properties, null, 2));
     throw error;
   }
 }
