@@ -7,18 +7,21 @@ async function checkNotionUpdates() {
     const notionResponse = await axios.post(
       `https://api.notion.com/v1/databases/${process.env.DATABASE_ID}/query`,
       {
+        filter: {
+          and: [
+            {
+              last_edited_time: {
+                after: tenMinutesAgo
+              }
+            }
+          ]
+        },
         sorts: [
           {
-            property: "last_edited_time",
-            direction: "descending",
-          },
-        ],
-        filter: {
-          timestamp: "last_edited_time",
-          last_edited_time: {
-            after: tenMinutesAgo,
-          },
-        },
+            timestamp: "last_edited_time",
+            direction: "descending"
+          }
+        ]
       },
       {
         headers: {
@@ -73,8 +76,6 @@ async function sendToTeams(message) {
     throw error;
   }
 }
-
-// ...existing code...
 
 checkNotionUpdates().catch((error) => {
   console.error("Script failed:", error);
