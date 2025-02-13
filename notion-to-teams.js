@@ -14,14 +14,32 @@ async function checkNotionUpdates() {
       }
     );
 
-    console.log(
-      "Notion API Response:",
-      JSON.stringify(notionResponse.data, null, 2)
-    );
+    const tasks = notionResponse.data.results;
+    if (tasks && tasks.length > 0) {
+      // Create a formatted message for each task
+      const taskMessages = tasks.map((task) => {
+        const taskName =
+          task.properties["Task name"]?.title?.[0]?.text?.content ||
+          "Untitled Task";
+        const taskStatus = task.properties.Status?.status?.name || "No Status";
+        const assignee =
+          task.properties.Assignee?.people?.[0]?.name || "Unassigned";
+        const taskUrl = task.url;
 
-    const latestTask = notionResponse.data.results[0];
-    if (latestTask) {
-      await sendToTeams(latestTask);
+        return `
+            ### ${taskName}
+            👤 **Assignee:** ${assignee}
+            📌 **Status:** ${taskStatus}
+            🔗 [View in Notion](${taskUrl})
+            ---`;
+      });
+
+      // Combine all task messages into one card
+      const message = {
+        text: `# 🚀 Notion Tasks Update\n\n${taskMessages.join("\n")}`,
+      };
+
+      await sendToTeams(message);
     } else {
       console.log("No tasks found in the response");
     }
@@ -31,31 +49,17 @@ async function checkNotionUpdates() {
   }
 }
 
-async function sendToTeams(task) {
+async function sendToTeams(message) {
   try {
-    // Safely access nested properties with correct mapping
-    const taskName =
-      task.properties?.["Task name"]?.title?.[0]?.text?.content ||
-      "Untitled Task";
-    const taskStatus = task.properties?.Status?.status?.name || "No Status";
-    const taskUrl = task.url || "";
-
-    // Add assignee information if available
-    const assignee =
-      task.properties?.Assignee?.people?.[0]?.name || "Unassigned";
-
-    const message = {
-      text: `🚀 **Task Updated:** ${taskName}\n👤 **Assignee:** ${assignee}\n📌 **Status:** ${taskStatus}\n🔗 [View Task in Notion](${taskUrl})`,
-    };
-
     await axios.post(process.env.TEAMS_WEBHOOK_URL, message);
     console.log("Message sent to Teams successfully!");
   } catch (error) {
     console.error("Error in sendToTeams:", error.message);
-    console.error("Task properties:", JSON.stringify(task.properties, null, 2));
     throw error;
   }
 }
+
+// ...existing code...
 
 checkNotionUpdates().catch((error) => {
   console.error("Script failed:", error);
