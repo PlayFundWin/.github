@@ -7,21 +7,13 @@ async function checkNotionUpdates() {
     const notionResponse = await axios.post(
       `https://api.notion.com/v1/databases/${process.env.DATABASE_ID}/query`,
       {
+        page_size: 100,
         filter: {
-          and: [
-            {
-              last_edited_time: {
-                after: tenMinutesAgo
-              }
-            }
-          ]
+          timestamp: "last_edited_time",
+          last_edited_time: {
+            after: tenMinutesAgo,
+          },
         },
-        sorts: [
-          {
-            timestamp: "last_edited_time",
-            direction: "descending"
-          }
-        ]
       },
       {
         headers: {
@@ -36,7 +28,12 @@ async function checkNotionUpdates() {
     let message;
 
     if (tasks && tasks.length > 0) {
-      const taskMessages = tasks.map((task) => {
+      // Sort tasks by last_edited_time manually since API sort is failing
+      const sortedTasks = tasks.sort(
+        (a, b) => new Date(b.last_edited_time) - new Date(a.last_edited_time)
+      );
+
+      const taskMessages = sortedTasks.map((task) => {
         const taskName =
           task.properties["Task name"]?.title?.[0]?.text?.content ||
           "Untitled Task";
@@ -63,6 +60,9 @@ async function checkNotionUpdates() {
     await sendToTeams(message);
   } catch (error) {
     console.error("Error in checkNotionUpdates:", error.message);
+    if (error.response) {
+      console.error("Notion API Error:", error.response.data);
+    }
     throw error;
   }
 }
