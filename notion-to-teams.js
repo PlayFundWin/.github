@@ -25,7 +25,6 @@ async function checkNotionUpdates() {
     );
 
     const tasks = notionResponse.data.results;
-    let message;
 
     if (tasks && tasks.length > 0) {
       // Sort tasks by last_edited_time manually since API sort is failing
@@ -46,18 +45,16 @@ async function checkNotionUpdates() {
         return `### ${taskName}\n👤 ${assignee} | 📌 ${taskStatus} | ⏰ ${lastEdited}\n🔗 [View in Notion](${taskUrl})\n---`;
       });
 
-      message = {
+      const message = {
         text: `## 🚀 Recent Notion Updates (Last 10 Minutes)\n${taskMessages.join(
           "\n"
         )}`,
       };
-    } else {
-      message = {
-        text: "## 🔍 Notion Update Check\nNo updates found in the last 10 minutes",
-      };
-    }
 
-    await sendToTeams(message);
+      await sendToTeams(message);
+    } else {
+      console.log("No updates found in the last 10 minutes");
+    }
   } catch (error) {
     console.error("Error in checkNotionUpdates:", error.message);
     if (error.response) {
