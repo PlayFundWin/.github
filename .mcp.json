@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "aws-api": {
+      "command": "uvx",
+      "args": ["awslabs.aws-api-mcp-server@latest"],
+      "env": {
+        "AWS_REGION": "${PFW_AWS_REGION:-eu-west-2}",
+        "AWS_ACCESS_KEY_ID": "${PFW_OPS_AWS_KEY}",
+        "AWS_SECRET_ACCESS_KEY": "${PFW_OPS_AWS_SECRET}"
+      }
+    },
+    "cloudwatch": {
+      "command": "uvx",
+      "args": ["awslabs.cloudwatch-mcp-server@latest"],
+      "env": {
+        "AWS_REGION": "${PFW_AWS_REGION:-eu-west-2}",
+        "AWS_ACCESS_KEY_ID": "${PFW_OPS_AWS_KEY}",
+        "AWS_SECRET_ACCESS_KEY": "${PFW_OPS_AWS_SECRET}"
+      }
+    }
+  }
+}
