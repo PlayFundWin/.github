@@ -1,0 +1,75 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadOnlyDiagnostics",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*",
+        "elasticloadbalancing:Describe*",
+        "autoscaling:Describe*",
+        "rds:Describe*",
+        "rds:ListTagsForResource",
+        "ecs:Describe*",
+        "ecs:List*",
+        "amplify:GetApp",
+        "amplify:ListApps",
+        "amplify:GetJob",
+        "amplify:ListJobs",
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics",
+        "cloudwatch:DescribeAlarms",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "logs:FilterLogEvents",
+        "logs:GetLogEvents",
+        "logs:StartQuery",
+        "logs:StopQuery",
+        "logs:GetQueryResults",
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SecretsReadOnlyScoped",
+      "Effect": "Allow",
+      "Action": ["secretsmanager:GetSecretValue", "ssm:GetParameter", "ssm:GetParameters"],
+      "Resource": [
+        "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:pfw/claude-ops/*",
+        "arn:aws:ssm:<REGION>:<ACCOUNT_ID>:parameter/pfw/claude-ops/*"
+      ]
+    },
+    {
+      "Sid": "SSMReadAndSession",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:DescribeInstanceInformation",
+        "ssm:GetCommandInvocation",
+        "ssm:ListCommands",
+        "ssm:ListCommandInvocations",
+        "ssm:DescribeSessions",
+        "ssm:GetConnectionStatus",
+        "ssm:StartSession"
+      ],
+      "Resource": "*",
+      "Condition": { "StringEquals": { "aws:ResourceTag/Project": "pfw" } }
+    },
+    {
+      "Sid": "ControlledActionPm2RestartOnly",
+      "Effect": "Allow",
+      "Action": ["ssm:SendCommand"],
+      "Resource": [
+        "arn:aws:ssm:<REGION>::document/AWS-RunShellScript",
+        "arn:aws:ec2:<REGION>:<ACCOUNT_ID>:instance/*"
+      ],
+      "Condition": { "StringEquals": { "ssm:resourceTag/Project": "pfw" } }
+    },
+    {
+      "Sid": "TerminateOwnSessionsOnly",
+      "Effect": "Allow",
+      "Action": ["ssm:TerminateSession", "ssm:ResumeSession"],
+      "Resource": "arn:aws:ssm:*:*:session/${aws:username}-*"
+    }
+  ]
+}
